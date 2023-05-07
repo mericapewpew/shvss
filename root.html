@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>shvss {{ .Version }}</title>
+    <style>
+        body {
+            background-color: black;
+            width: 99%;
+            margin: 0;
+        }
+        .grid_menu { grid-area: menu; }
+        .grid_content { grid-area: content; }
+        .grid-container {
+            display: grid;
+            grid-template-areas:
+                'menu menu'
+                'content content ';
+            grid-gap: 1px;
+            background-color: #00ff00;
+            padding: 1px;
+        }
+        .grid-container > div {
+            background-color: black;
+            text-align: center;
+            padding: 2px 0;
+            font-size: 30px;
+        }
+        .closeButton{
+            right: 15px;
+            top: 5px;
+            margin: 0;
+            font-size: 30px;
+            position: absolute;
+            cursor: pointer;
+            color: #00ff00;
+        }
+        .dlSubsButton{
+            top: 5px;
+            margin: 0;
+            font-size: 30px;
+
+            cursor: pointer;
+            color: #00ff00;
+        }
+        .subsDiv {
+            width: auto;
+            z-index: 109;
+            position: fixed;
+            display: block;
+            right: 0;
+            top: 0;
+            background-color: rgba(0,0,0,0.95);
+            color: #00ff00;
+            border: solid 1px #00ff00;
+            max-height: 100%;
+            overflow: auto;
+        }
+        .subItemDiv {
+            padding: 15px;
+            display: block;
+            border: 1px solid #00ff00;
+        }
+        .subName {
+            color: #fd2fb5;
+        }
+        .subRemoveButton {
+            padding-right: 30px ;
+            float: right;
+            position: relative;
+            cursor: pointer;
+            color: rgba(133,110,35,0.9);
+        }
+        #moreButton {
+            border: solid 1px #00ff00;
+            z-index: 101;
+            height: 30px;
+            width: 99%;
+            cursor: pointer;
+            margin: 5px;
+            float: left;
+            color: #00ff00;
+        }
+        #addData {
+            margin-top: 0;
+        }
+        #inputText, #inputButton {
+            background-color: black;
+            color: #00ff00;
+            border-color: #00ff00;
+        }
+        .content-item {
+            border: solid 1px #00ff00;
+            z-index: 101;
+            font-size: large;
+            cursor: pointer;
+            margin: 5px;
+            float: left;
+            color: #00ff00;
+            text-shadow: -1px -1px 1px #000, 1px -1px 1px #000, -1px 1px 1px #000, 1px 1px 1px #000;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+
+        }
+        .tooltip .tooltiptext {
+            font-size: medium;
+            visibility: hidden;
+            width: 120px;
+            background-color: #262626;
+            color: #00ff00;
+            text-align: center;
+            padding: 5px 0;
+            position: absolute;
+            z-index: 99999;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+        }
+    </style>
+    <script>
+        document.addEventListener("keydown", function (e) {
+            if (!document.getElementById("subsDiv")) {
+                switch (e.key) {
+                    case 'r':
+                        reloadVidDiv();
+                        break;
+                    case 's':
+                        subsDiv();
+                        break;
+                    case 'Enter':
+                        submitForm();
+                        break;
+                    default:
+                        console.log(e.key);
+                }
+            }
+        });
+    </script>
+</head>
+<body>
+<div class="grid-container">
+    <div class="grid_menu">
+        <div class="tooltip" style="float: left; color: #00ff00" onclick="reloadVidDiv()">
+            reload
+            <span class="tooltiptext">Keyboard Shortcut "r"</span>
+        </div>
+        <div class="tooltip" style="float: right; color: #00ff00" onclick="subsDiv()">
+            subs
+            <span style="top: -5px;right: 105%;" class="tooltiptext">Keyboard Shortcut "s"</span>
+        </div>
+    </div>
+    <div class="grid_content" id="videoDiv"></div>
+</div>
+<script>
+    console.log("{{ .Version }}")
+    let pos = 0;
+    let sl;
+    let videoDiv = document.getElementById("videoDiv");
+    let yt_embed_url = "https://www.youtube-nocookie.com/embed/"
+    let rumble_embed_url = "https://rumble.com/embed/"
+    function httpPostAsync(url, input, callback) {
+        let req = new XMLHttpRequest();
+        req.onreadystatechange = function() {
+            if (req.readyState === 4 && req.status === 200) {
+                let data = req.responseText;
+                if (callback) {
+                    callback(data);
+                }
+            }
+        };
+        req.open('POST', url, true);
+        req.send(input);
+    }
+    function subsDiv() {
+        let subDiv = document.createElement("div");
+        subDiv.setAttribute("class", "subsDiv");
+        subDiv.setAttribute("id", "subsDiv");
+        document.body.appendChild(subDiv);
+        let dlSubsButton = document.createElement("p");
+        dlSubsButton.setAttribute("class", "dlSubsButton");
+        dlSubsButton.innerText = "[DL SUBS]";
+        dlSubsButton.setAttribute("onclick", "dlSubsButton()");
+        subDiv.appendChild(dlSubsButton);
+        let closeButton = document.createElement("p");
+        closeButton.setAttribute("class", "closeButton");
+        closeButton.innerText = "[Close]";
+        closeButton.setAttribute("onclick", "closeDiv('subsDiv')");
+        subDiv.appendChild(closeButton);
+        // TODO : grid input forms
+        // YouTube input form
+        let YoutubeInputForm = document.createElement("form");
+        YoutubeInputForm.innerText = "Youtube:(UC***********) ";
+        YoutubeInputForm.setAttribute("id", "youtubeAddData");
+        let YoutubeInputText = document.createElement("input");
+        YoutubeInputText.setAttribute("id", "inputText");
+        YoutubeInputText.type = "text";
+        YoutubeInputForm.appendChild(YoutubeInputText);
+        let YoutubeInputFeild = document.createElement("input");
+        YoutubeInputFeild.type = "button";
+        YoutubeInputFeild.setAttribute("id", "inputButton");
+        YoutubeInputFeild.setAttribute("onclick", "submitForm('youtube')");
+        YoutubeInputFeild.value = "Add";
+        YoutubeInputForm.appendChild(YoutubeInputFeild);
+        subDiv.appendChild(YoutubeInputForm);
+        // Rumble input form
+        let RumbleInputForm = document.createElement("form");
+        RumbleInputForm.innerText = "Rumble:() ";
+        RumbleInputForm.setAttribute("id", "rumbleAddData");
+        let RumbleInputText = document.createElement("input");
+        RumbleInputText.setAttribute("id", "inputText");
+        RumbleInputText.type = "text";
+        RumbleInputForm.appendChild(RumbleInputText);
+        let RumbleInputFeild = document.createElement("input");
+        RumbleInputFeild.type = "button";
+        RumbleInputFeild.setAttribute("id", "inputButton");
+        RumbleInputFeild.setAttribute("onclick", "submitForm('rumble')");
+        RumbleInputFeild.value = "Add";
+        RumbleInputForm.appendChild(RumbleInputFeild);
+        subDiv.appendChild(RumbleInputForm);
+        // Odysee input form
+        let OdyseeInputForm = document.createElement("form");
+        OdyseeInputForm.innerText = "Odysee:() ";
+        OdyseeInputForm.setAttribute("id", "odyseeAddData");
+        let OdyseeInputText = document.createElement("input");
+        OdyseeInputText.setAttribute("id", "inputText");
+        OdyseeInputText.type = "text";
+        OdyseeInputForm.appendChild(OdyseeInputText);
+        let OdyseeInputFeild = document.createElement("input");
+        OdyseeInputFeild.type = "button";
+        OdyseeInputFeild.setAttribute("id", "inputButton");
+        OdyseeInputFeild.setAttribute("onclick", "submitForm('odysee')");
+        OdyseeInputFeild.value = "Add";
+        OdyseeInputForm.appendChild(OdyseeInputFeild);
+        subDiv.appendChild(OdyseeInputForm);
+        let jsonData = JSON.stringify({ Action: "list", Value: "", Service: ""});
+        httpPostAsync("/subs", jsonData,  function(data) {
+            console.log(data)
+            let jData = JSON.parse(data);
+            let subs = jData.Subs;
+            if ( subs == null) {
+                let ns = document.createElement("p");
+                ns.innerText = "Please add subs above!!";
+                subDiv.appendChild(ns);
+            }
+            subs.reverse();
+            for (let i in subs) {
+                let subItemDiv = document.createElement("div");
+                subItemDiv.setAttribute("class", "subItemDiv");
+                subDiv.appendChild(subItemDiv);
+                let subName = document.createElement("span");
+                subName.setAttribute("class", "subName");
+                subName.innerText = subs[i].Name;
+                subItemDiv.appendChild(subName);
+                let subRemoveButton = document.createElement("span");
+                subRemoveButton.setAttribute("class", "subRemoveButton");
+                subRemoveButton.innerText = "    delete";
+                let rmSubString = 'SubAction("remove", "'+subs[i].UID+'");';
+                subRemoveButton.setAttribute("onclick", rmSubString);
+                subName.appendChild(subRemoveButton);
+            }
+        });
+        inputText.focus();
+    }
+    function dlSubsButton() {
+        let link = document.createElement("a");
+        link.href = "/subsFile";
+        link.download = "subs.json"
+        link.click();
+    }
+    function reloadVidDiv() {
+        pos = 0;
+        videoDiv.scrollTop = 0;
+        videoDiv.innerHTML = "";
+        loadPage();
+    }
+    function loadPage() {
+        httpPostAsync("/videos", "",  function(data) {
+            let jData = JSON.parse(data);
+            let e = jData.Entries;
+            sl = e.sort(function(a,b){return new Date(b.Date) - new Date(a.Date)}); // sort entries by date
+            loadVideos();
+        });
+    }
+    function loadVideos() {
+        let end = pos + 50;
+        if ( sl.length < end ) {
+            end = sl.length;
+        }
+        for (let i = pos; i < end; i++) {
+            //console.log(i);
+            let itemSpan = document.createElement("p");
+            itemSpan.style.backgroundImage = "url('"+sl[i].VidImg+"')";
+            itemSpan.innerText = sl[i].UserName + " : " + sl[i].VidName;
+            itemSpan.style.backgroundSize = "420px 235px";
+            itemSpan.style.height = "235px";
+            itemSpan.style.width = "420px";
+            itemSpan.setAttribute("class", "content-item");
+            switch (sl[i].Service) {
+                case "youtube":
+                    itemSpan.setAttribute("id", sl[i].VidID);
+                    itemSpan.setAttribute("onclick", "YTiFrameDiv('"+sl[i].VidID+"')");
+                    break;
+                case "rumble":
+                    itemSpan.setAttribute("id", sl[i].VidID);
+                    itemSpan.setAttribute("onclick", "RumbleiFrameDiv('"+sl[i].VidID+"')");
+                    break;
+                case "odysee":
+                    let vid = sl[i].VidID;
+                    let spVid = vid.split(":");
+                    itemSpan.setAttribute("id", spVid[spVid.length-1]);
+                    itemSpan.setAttribute("onclick", 'OdyseeiFrameDiv("'+sl[i].VidID+'")');
+                    break;
+            }
+            videoDiv.appendChild(itemSpan);
+        }
+        pos = end;
+        let mb = document.createElement("p");
+        mb.setAttribute("id", "moreButton");
+        mb.setAttribute("onclick", "rlc();loadVideos();");
+        mb.innerText = "load more";
+        videoDiv.appendChild(mb);
+        sizeAdjuster();
+    }
+    function rlc() {
+        videoDiv.removeChild(videoDiv.lastChild);
+    }
+    function closeDiv(name) {
+        let vidDiv = document.getElementById(name);
+        document.body.removeChild(vidDiv);
+    }
+    function SubAction(action, value, service) {
+        let jsonData = JSON.stringify({ Action: action, Value: value, Service: service});
+        httpPostAsync("/subs", jsonData,  function(data) {
+            console.log(data);
+            closeDiv("subsDiv");
+            subsDiv();
+        });
+    }
+    function submitForm(service) {
+        // TODO : fix rumble support
+        if (service === "rumble" ) {
+            alert("rumble support broken for now");
+            return;
+        }
+        let form0 = document.getElementById(service+"AddData");
+        SubAction("add", form0.elements[0].value, service);
+    }
+    function RumbleiFrameDiv(videoID) {
+        let target = document.getElementById(videoID);
+        let videoIframe = document.createElement("iframe");
+        videoIframe.src = rumble_embed_url + videoID;
+        videoIframe.allowFullscreen = true;
+        videoIframe.setAttribute("class", "content-item");
+        target.parentNode.replaceChild(videoIframe, target);
+        sizeAdjuster();
+    }
+    function YTiFrameDiv(videoID) {
+        let target = document.getElementById(videoID);
+        let videoIframe = document.createElement("iframe");
+        videoIframe.src = yt_embed_url + videoID;
+        videoIframe.allowFullscreen = true;
+        videoIframe.setAttribute("class", "content-item");
+        target.parentNode.replaceChild(videoIframe, target);
+        sizeAdjuster();
+    }
+    function OdyseeiFrameDiv(videoID) {
+        let spvid = videoID.split(":")
+        let target = document.getElementById(spvid[spvid.length-1]);
+        let videoIframe = document.createElement("iframe");
+        videoIframe.src = videoID;
+        videoIframe.allowFullscreen = true;
+        videoIframe.setAttribute("class", "content-item");
+        target.parentNode.replaceChild(videoIframe, target);
+        sizeAdjuster();
+    }
+    function sizeAdjuster() {
+        let wiw = window.innerWidth;
+        let interHeight = 700 / 6;
+        let interWidth = 1920 / 6;
+        let padding = 30;
+        let columns = 1;
+        //console.log(wiw);
+        if (wiw > 800) {
+            columns = 2;
+        }
+        if (wiw > 1313) {
+            columns = 3;
+        }
+        while (interWidth < (wiw/columns)-padding) {
+            interWidth = interWidth + 3;
+            interHeight = interHeight + 3;
+        }
+        // console.log(`H:${interHeight} W:${interWidth}`);
+        let ci = document.getElementsByClassName("content-item");
+        for (let i = 0; i < ci.length; i++) {
+            ci.item(i).style.height = `${interHeight}px`;
+            ci.item(i).style.width = `${interWidth}px`;
+            ci.item(i).style.backgroundSize = `${interWidth}px ${interHeight}px`;
+        }
+    }
+    window.onresize = sizeAdjuster;
+    loadPage();
+</script>
+</body>
+</html>
