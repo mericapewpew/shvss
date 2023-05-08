@@ -323,13 +323,15 @@
         SubAction("add", form0.elements[0].value, service);
     }
     function RumbleiFrameDiv(videoID) {
-        let target = document.getElementById(videoID);
-        let videoIframe = document.createElement("iframe");
-        videoIframe.src = videoID;
-        videoIframe.allowFullscreen = true;
-        videoIframe.setAttribute("class", "content-item");
-        target.parentNode.replaceChild(videoIframe, target);
-        sizeAdjuster();
+        httpPostAsync("/rumbleEmbed?data="+videoID, "",  function(data) {
+            let target = document.getElementById(videoID);
+            let videoIframe = document.createElement("iframe");
+            videoIframe.src = data;
+            videoIframe.allowFullscreen = true;
+            videoIframe.setAttribute("class", "content-item");
+            target.parentNode.replaceChild(videoIframe, target);
+            sizeAdjuster();
+        });
     }
     function YTiFrameDiv(videoID) {
         let target = document.getElementById(videoID);

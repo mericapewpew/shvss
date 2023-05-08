@@ -284,6 +284,7 @@ func (s *Server) getUserName(input string) (name string, err error) {
 	}
 }
 
+// TODO : make api call, slows page loading alot
 // rumbleEmbedLookup(url string) (string, err) :: GET video url and use regex to extract embed url
 func rumbleEmbedLookup(url string) (string, error) {
 	bb, err := httpGet(url)
@@ -328,18 +329,12 @@ func (s *Server) getServiceData() (Response, error) {
 					return
 				}
 				for _, v := range f.Channel.Item {
-					rmu, err := rumbleEmbedLookup(v.Guid.Text)
-					if err != nil {
-						log.Printf("rumbleEmbedLookup():%v\n", err)
-						s.wg.Done()
-						return
-					}
 					i := Entry{
 						Service:  vs.Service,
 						Date:     v.PubDate,
 						VidName:  v.Title,
 						UserName: f.Channel.Text,
-						VidID:    rmu,
+						VidID:    v.Guid.Text,
 						VidImg:   v.Image.Href,
 					}
 					r.Entries = append(r.Entries, i)
@@ -481,6 +476,17 @@ func (s *Server) Serve() {
 			}
 		}
 	}
+	http.HandleFunc("/rumbleEmbed", func(w http.ResponseWriter, r *http.Request) {
+		rmu, err := rumbleEmbedLookup(r.FormValue("data"))
+		if err != nil {
+			log.Printf("rumbleEmbedLookup():%v\n", err)
+			return
+		}
+		if _, err := w.Write([]byte(rmu)); err != nil {
+			log.Printf("failed to write to responseWriter:%v\n", err)
+			return
+		}
+	})
 	http.HandleFunc("/subsFile", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, s.SubsFile)
 	})
