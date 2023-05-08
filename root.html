@@ -119,25 +119,6 @@
             visibility: visible;
         }
     </style>
-    <script>
-        document.addEventListener("keydown", function (e) {
-            if (!document.getElementById("subsDiv")) {
-                switch (e.key) {
-                    case 'r':
-                        reloadVidDiv();
-                        break;
-                    case 's':
-                        subsDiv();
-                        break;
-                    case 'Enter':
-                        submitForm();
-                        break;
-                    default:
-                        console.log(e.key);
-                }
-            }
-        });
-    </script>
 </head>
 <body>
 <div class="grid-container">
@@ -333,24 +314,18 @@
     function SubAction(action, value, service) {
         let jsonData = JSON.stringify({ Action: action, Value: value, Service: service});
         httpPostAsync("/subs", jsonData,  function(data) {
-            console.log(data);
             closeDiv("subsDiv");
             subsDiv();
         });
     }
     function submitForm(service) {
-        // TODO : fix rumble support
-        if (service === "rumble" ) {
-            alert("rumble support broken for now");
-            return;
-        }
         let form0 = document.getElementById(service+"AddData");
         SubAction("add", form0.elements[0].value, service);
     }
     function RumbleiFrameDiv(videoID) {
         let target = document.getElementById(videoID);
         let videoIframe = document.createElement("iframe");
-        videoIframe.src = rumble_embed_url + videoID;
+        videoIframe.src = videoID;
         videoIframe.allowFullscreen = true;
         videoIframe.setAttribute("class", "content-item");
         target.parentNode.replaceChild(videoIframe, target);
@@ -381,7 +356,6 @@
         let interWidth = 1920 / 6;
         let padding = 30;
         let columns = 1;
-        //console.log(wiw);
         if (wiw > 800) {
             columns = 2;
         }
@@ -392,7 +366,6 @@
             interWidth = interWidth + 3;
             interHeight = interHeight + 3;
         }
-        // console.log(`H:${interHeight} W:${interWidth}`);
         let ci = document.getElementsByClassName("content-item");
         for (let i = 0; i < ci.length; i++) {
             ci.item(i).style.height = `${interHeight}px`;

@@ -2,7 +2,7 @@
 Self Hosted Video Subscription Server
 
 ## Description
-A server that displays youtube and odysee videos in chronological order based on what you add to the subs div.
+A server that displays youtube, odysee and rumble videos in chronological order based on what you add to the subs div.
 
 ## Installation
 * install build requirements
@@ -40,9 +40,9 @@ in the url, including claim id
 
 ![](.gitassets/odysee.png)
 
-### Rumble (broken)
+### Rumble
 
 ---
-rumble is implemented, but the embed_ID and video_ID are different, parsing each page to extract the embed id is slow
+in the url
 
-"embedUrl": "https://rumble.com/embed/{embed_ID}/" is in the page as a json variable 
+![](.gitassets/rumble.png)

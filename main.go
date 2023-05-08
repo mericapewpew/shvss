@@ -12,6 +12,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 )
@@ -283,6 +284,24 @@ func (s *Server) getUserName(input string) (name string, err error) {
 	}
 }
 
+func rumbleEmbedLookup(url string) string {
+	response, err := http.Get(url)
+	if err != nil {
+		log.Panicln(err)
+	}
+	bb, err := io.ReadAll(response.Body)
+	if err != nil {
+		log.Panicln(err)
+	}
+	for _, v := range strings.Split(string(bb), "\n") {
+		if strings.Contains(v, "embedUrl") {
+			re := regexp.MustCompile("(?i)https://rumble\\.com/embed/[a-zA-Z0-9]+/")
+			return re.FindStringSubmatch(v)[0]
+		}
+	}
+	return ""
+}
+
 func (s *Server) getServiceData() (Response, error) {
 	r := Response{}
 	fb, err := os.ReadFile(s.SubsFile)
@@ -316,11 +335,8 @@ func (s *Server) getServiceData() (Response, error) {
 						Date:     s.PubDate,
 						VidName:  s.Title,
 						UserName: f.Channel.Text,
-						VidID: func() string {
-							ss := strings.Split(s.Guid.Text, "/")
-							return ss[len(ss)-1][0:7]
-						}(),
-						VidImg: s.Image.Href,
+						VidID:    rumbleEmbedLookup(s.Guid.Text),
+						VidImg:   s.Image.Href,
 					}
 					r.Entries = append(r.Entries, i)
 				}
