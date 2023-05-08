@@ -284,7 +284,6 @@ func (s *Server) getUserName(input string) (name string, err error) {
 	}
 }
 
-// TODO : make api call, slows page loading alot
 // rumbleEmbedLookup(url string) (string, err) :: GET video url and use regex to extract embed url
 func rumbleEmbedLookup(url string) (string, error) {
 	bb, err := httpGet(url)
