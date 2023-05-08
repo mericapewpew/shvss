@@ -19,7 +19,7 @@ import (
 
 const (
 	ProgramName   = "shvss"
-	Version       = "v0.1"
+	Version       = "v0.1.1"
 	license       = `not yet licensed`
 	RumbleXmlUrl  = "http://rssgen.xyz/rumble/"
 	OdyseeXmlUrl  = "https://odysee.com/$/rss/@"
@@ -149,8 +149,8 @@ type Rumble struct {
 	} `xml:"channel"`
 }
 
-// Youtube : Youtube xml structure from https://www.youtube.com/feeds/videos.xml?channel_id={UID}
-type Youtube struct {
+// YouTube : YouTube xml structure from https://www.youtube.com/feeds/videos.xml?channel_id={UID}
+type YouTube struct {
 	XMLName xml.Name `xml:"feed"`
 	Text    string   `xml:",chardata"`
 	Yt      string   `xml:"yt,attr"`
@@ -239,7 +239,7 @@ type Entry struct {
 func httpGet(url string) ([]byte, error) {
 	res, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("ERROR::http.Get(url)::%v", err)
+		return nil, fmt.Errorf("ERROR::http.Get('%s')::%v", url, err)
 	}
 	bb, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -248,11 +248,11 @@ func httpGet(url string) ([]byte, error) {
 	return bb, nil
 }
 
-func youtubeXmlUnmarshal(input []byte) (Youtube, error) {
-	f := Youtube{}
+func youtubeXmlUnmarshal(input []byte) (YouTube, error) {
+	f := YouTube{}
 	if err := xml.Unmarshal(input, &f); err != nil {
 		fmt.Println(string(input))
-		return Youtube{}, err
+		return YouTube{}, err
 	}
 	return f, nil
 }
@@ -284,22 +284,19 @@ func (s *Server) getUserName(input string) (name string, err error) {
 	}
 }
 
-func rumbleEmbedLookup(url string) string {
-	response, err := http.Get(url)
+// rumbleEmbedLookup(url string) (string, err) :: GET video url and use regex to extract embed url
+func rumbleEmbedLookup(url string) (string, error) {
+	bb, err := httpGet(url)
 	if err != nil {
-		log.Panicln(err)
-	}
-	bb, err := io.ReadAll(response.Body)
-	if err != nil {
-		log.Panicln(err)
+		return "", fmt.Errorf("httpGet(url) :: %v\n", err)
 	}
 	for _, v := range strings.Split(string(bb), "\n") {
 		if strings.Contains(v, "embedUrl") {
 			re := regexp.MustCompile("(?i)https://rumble\\.com/embed/[a-zA-Z0-9]+/")
-			return re.FindStringSubmatch(v)[0]
+			return re.FindStringSubmatch(v)[0], nil
 		}
 	}
-	return ""
+	return "", fmt.Errorf("failed to find 'embedUrl' in document %s", url)
 }
 
 func (s *Server) getServiceData() (Response, error) {
@@ -317,26 +314,33 @@ func (s *Server) getServiceData() (Response, error) {
 		vs := vv
 		go func() {
 			switch vs.Service {
-			case "rumble": // TODO : rumble video id is different that embed id? WTF? api does not offer embed id
+			case "rumble":
 				gr, err := httpGet(RumbleXmlUrl + vs.UID)
 				if err != nil {
-					log.Printf("ERROR::httpGet(YOUTUBE_XML_API_ID + vs.UID)::%v\n", err)
+					log.Printf("httpGet(RumbleXmlUrl + %s)::%v\n", vs.UID, err)
 					s.wg.Done()
 					return
 				}
 				f := Rumble{}
 				if err := xml.Unmarshal(gr, &f); err != nil {
+					log.Printf("faild to unmarshal xml data for %s %s %s :: \nError=\n%v\n", vs.Service, vs.Name, vs.UID, err)
 					s.wg.Done()
 					return
 				}
-				for _, s := range f.Channel.Item {
+				for _, v := range f.Channel.Item {
+					rmu, err := rumbleEmbedLookup(v.Guid.Text)
+					if err != nil {
+						log.Printf("rumbleEmbedLookup():%v\n", err)
+						s.wg.Done()
+						return
+					}
 					i := Entry{
 						Service:  vs.Service,
-						Date:     s.PubDate,
-						VidName:  s.Title,
+						Date:     v.PubDate,
+						VidName:  v.Title,
 						UserName: f.Channel.Text,
-						VidID:    rumbleEmbedLookup(s.Guid.Text),
-						VidImg:   s.Image.Href,
+						VidID:    rmu,
+						VidImg:   v.Image.Href,
 					}
 					r.Entries = append(r.Entries, i)
 				}
@@ -350,6 +354,7 @@ func (s *Server) getServiceData() (Response, error) {
 				}
 				f := Odysee{}
 				if err := xml.Unmarshal(gr, &f); err != nil {
+					log.Printf("faild to unmarshal xml data for %s %s %s :: \nError=\n%v\n", vs.Service, vs.Name, vs.UID, err)
 					s.wg.Done()
 					return
 				}
@@ -377,6 +382,7 @@ func (s *Server) getServiceData() (Response, error) {
 				}
 				f, err := youtubeXmlUnmarshal(gr)
 				if err != nil {
+					log.Printf("faild to unmarshal xml data for %s %s %s :: \nError=\n%v\n", vs.Service, vs.Name, vs.UID, err)
 					s.wg.Done()
 					return
 				}
@@ -470,7 +476,7 @@ func (s *Server) Serve() {
 	for _, address := range addrs {
 		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
 			if ipnet.IP.To4() != nil {
-				log.Printf("yt-874 serving @ http://%v:%s\n", ipnet.IP.String(), s.Port)
+				log.Printf("sshvss serving @ http://%v:%s\n", ipnet.IP.String(), s.Port)
 				break
 			}
 		}
