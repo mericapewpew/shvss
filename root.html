@@ -136,11 +136,11 @@
 </div>
 <script>
     console.log("{{ .Version }}")
+    console.log("{{ .License }}")
     let pos = 0;
     let sl;
     let videoDiv = document.getElementById("videoDiv");
     let yt_embed_url = "https://www.youtube-nocookie.com/embed/"
-    let rumble_embed_url = "https://rumble.com/embed/"
     function httpPostAsync(url, input, callback) {
         let req = new XMLHttpRequest();
         req.onreadystatechange = function() {
@@ -242,7 +242,6 @@
                 subName.appendChild(subRemoveButton);
             }
         });
-        inputText.focus();
     }
     function dlSubsButton() {
         let link = document.createElement("a");

@@ -18,10 +18,24 @@ import (
 )
 
 const (
-	ProgramName   = "shvss"
-	Version       = "v0.1.1"
-	license       = `not yet licensed`
-	RumbleXmlUrl  = "http://rssgen.xyz/rumble/"
+	ProgramName = "shvss"
+	Version     = "v0.1.2"
+	License     = `shvss
+    Copyright (C) 2023 mericapewpew
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.`
+	RumbleXmlUrl  = "http://rssgen.xyz/rumble/" // TODO : replace api, is slow
 	OdyseeXmlUrl  = "https://odysee.com/$/rss/@"
 	YoutubeXmlUrl = "https://www.youtube.com/feeds/videos.xml?channel_id="
 )
@@ -542,8 +556,10 @@ func (s *Server) Serve() {
 		}
 		if err := t.Execute(w, &struct {
 			Version string
+			License string
 		}{
 			Version: Version,
+			License: License,
 		}); err != nil {
 			log.Printf("ERROR::t.Execute(w, &ts)::%v\n", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
