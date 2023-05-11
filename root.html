@@ -86,9 +86,6 @@
             float: left;
             color: #00ff00;
         }
-        #addData {
-            margin-top: 0;
-        }
         #serviceInput, #uidInput, #submitButton {
             background-color: black;
             color: #00ff00;
@@ -104,25 +101,6 @@
             color: #00ff00;
             text-shadow: -1px -1px 1px #000, 1px -1px 1px #000, -1px 1px 1px #000, 1px 1px 1px #000;
         }
-        .tooltip {
-            position: relative;
-            display: inline-block;
-
-        }
-        .tooltip .tooltiptext {
-            font-size: medium;
-            visibility: hidden;
-            width: 120px;
-            background-color: #262626;
-            color: #00ff00;
-            text-align: center;
-            padding: 5px 0;
-            position: absolute;
-            z-index: 99999;
-        }
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-        }
     </style>
 </head>
 <body>
@@ -130,11 +108,9 @@
     <div class="grid_menu">
         <div class="tooltip" style="float: left; color: #00ff00" onclick="reloadVidDiv()">
             reload
-            <span class="tooltiptext">Keyboard Shortcut "r"</span>
         </div>
         <div class="tooltip" style="float: right; color: #00ff00" onclick="subsDiv()">
             subs
-            <span style="top: -5px;right: 105%;" class="tooltiptext">Keyboard Shortcut "s"</span>
         </div>
     </div>
     <div class="grid_content" id="videoDiv"></div>
@@ -184,8 +160,7 @@
         serviceOptions.forEach(function (value, index) {
             let opt = document.createElement("option");
             opt.innerText = value
-            serviceInput.appendChild(opt);
-            console.log(value);
+            serviceInput.appendChild(opt)
         })
         globalInputForm.appendChild(serviceInput);
         let uidInput = document.createElement("input");
@@ -200,7 +175,6 @@
         subDiv.appendChild(globalInputForm);
         let jsonData = JSON.stringify({ Action: "list", Value: "", Service: ""});
         httpPostAsync("/subs", jsonData,  function(data) {
-            // console.log(data)
             let jData = JSON.parse(data);
             let subs = jData.Subs;
             if ( subs == null) {
