@@ -61,13 +61,18 @@
             display: block;
             border: 1px solid #00ff00;
         }
+        .subServiceImg {
+            height: 32px;
+            width: 32px;
+        }
         .subName {
             color: #fd2fb5;
+            padding: 15px;
+            position: absolute;
         }
         .subRemoveButton {
-            padding-right: 30px ;
-            float: right;
-            position: relative;
+            padding: 15px ;
+
             cursor: pointer;
             color: rgba(133,110,35,0.9);
         }
@@ -84,7 +89,7 @@
         #addData {
             margin-top: 0;
         }
-        #inputText, #inputButton {
+        #serviceInput, #uidInput, #submitButton {
             background-color: black;
             color: #00ff00;
             border-color: #00ff00;
@@ -155,6 +160,7 @@
         req.send(input);
     }
     function subsDiv() {
+        // TODO : css
         let subDiv = document.createElement("div");
         subDiv.setAttribute("class", "subsDiv");
         subDiv.setAttribute("id", "subsDiv");
@@ -170,54 +176,31 @@
         closeButton.setAttribute("onclick", "closeDiv('subsDiv')");
         subDiv.appendChild(closeButton);
         // TODO : grid input forms
-        // YouTube input form
-        let YoutubeInputForm = document.createElement("form");
-        YoutubeInputForm.innerText = "Youtube:(UC***********) ";
-        YoutubeInputForm.setAttribute("id", "youtubeAddData");
-        let YoutubeInputText = document.createElement("input");
-        YoutubeInputText.setAttribute("id", "inputText");
-        YoutubeInputText.type = "text";
-        YoutubeInputForm.appendChild(YoutubeInputText);
-        let YoutubeInputFeild = document.createElement("input");
-        YoutubeInputFeild.type = "button";
-        YoutubeInputFeild.setAttribute("id", "inputButton");
-        YoutubeInputFeild.setAttribute("onclick", "submitForm('youtube')");
-        YoutubeInputFeild.value = "Add";
-        YoutubeInputForm.appendChild(YoutubeInputFeild);
-        subDiv.appendChild(YoutubeInputForm);
-        // Rumble input form
-        let RumbleInputForm = document.createElement("form");
-        RumbleInputForm.innerText = "Rumble:() ";
-        RumbleInputForm.setAttribute("id", "rumbleAddData");
-        let RumbleInputText = document.createElement("input");
-        RumbleInputText.setAttribute("id", "inputText");
-        RumbleInputText.type = "text";
-        RumbleInputForm.appendChild(RumbleInputText);
-        let RumbleInputFeild = document.createElement("input");
-        RumbleInputFeild.type = "button";
-        RumbleInputFeild.setAttribute("id", "inputButton");
-        RumbleInputFeild.setAttribute("onclick", "submitForm('rumble')");
-        RumbleInputFeild.value = "Add";
-        RumbleInputForm.appendChild(RumbleInputFeild);
-        subDiv.appendChild(RumbleInputForm);
-        // Odysee input form
-        let OdyseeInputForm = document.createElement("form");
-        OdyseeInputForm.innerText = "Odysee:() ";
-        OdyseeInputForm.setAttribute("id", "odyseeAddData");
-        let OdyseeInputText = document.createElement("input");
-        OdyseeInputText.setAttribute("id", "inputText");
-        OdyseeInputText.type = "text";
-        OdyseeInputForm.appendChild(OdyseeInputText);
-        let OdyseeInputFeild = document.createElement("input");
-        OdyseeInputFeild.type = "button";
-        OdyseeInputFeild.setAttribute("id", "inputButton");
-        OdyseeInputFeild.setAttribute("onclick", "submitForm('odysee')");
-        OdyseeInputFeild.value = "Add";
-        OdyseeInputForm.appendChild(OdyseeInputFeild);
-        subDiv.appendChild(OdyseeInputForm);
+        let globalInputForm = document.createElement("form");
+        globalInputForm.setAttribute("id", "");
+        let serviceInput = document.createElement("select");
+        serviceInput.setAttribute("id", "serviceInput");
+        let serviceOptions = ["youtube", "odysee", "rumble"];
+        serviceOptions.forEach(function (value, index) {
+            let opt = document.createElement("option");
+            opt.innerText = value
+            serviceInput.appendChild(opt);
+            console.log(value);
+        })
+        globalInputForm.appendChild(serviceInput);
+        let uidInput = document.createElement("input");
+        uidInput.type = "text";
+        uidInput.setAttribute("id", "uidInput");
+        globalInputForm.appendChild(uidInput);
+        let submitButton = document.createElement("button");
+        submitButton.innerText = "submit";
+        submitButton.setAttribute("id", "submitButton");
+        submitButton.setAttribute("onclick", "submitForm()");
+        globalInputForm.appendChild(submitButton);
+        subDiv.appendChild(globalInputForm);
         let jsonData = JSON.stringify({ Action: "list", Value: "", Service: ""});
         httpPostAsync("/subs", jsonData,  function(data) {
-            console.log(data)
+            // console.log(data)
             let jData = JSON.parse(data);
             let subs = jData.Subs;
             if ( subs == null) {
@@ -230,6 +213,10 @@
                 let subItemDiv = document.createElement("div");
                 subItemDiv.setAttribute("class", "subItemDiv");
                 subDiv.appendChild(subItemDiv);
+                let subServiceImg = document.createElement("img");
+                subServiceImg.setAttribute("class", "subServiceImg");
+                subServiceImg.src = "/images/"+subs[i].Service+".png";
+                subItemDiv.appendChild(subServiceImg);
                 let subName = document.createElement("span");
                 subName.setAttribute("class", "subName");
                 subName.innerText = subs[i].Name;
@@ -317,9 +304,10 @@
             subsDiv();
         });
     }
-    function submitForm(service) {
-        let form0 = document.getElementById(service+"AddData");
-        SubAction("add", form0.elements[0].value, service);
+    function submitForm() {
+        let si = document.getElementById("serviceInput");
+        let uid = document.getElementById("uidInput");
+        SubAction("add", uid.value, si.value);
     }
     function RumbleiFrameDiv(videoID) {
         httpPostAsync("/rumbleEmbed?data="+videoID, "",  function(data) {

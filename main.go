@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	_ "embed"
 	"encoding/json"
 	"encoding/xml"
@@ -15,11 +16,12 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"time"
 )
 
 const (
 	ProgramName = "shvss"
-	Version     = "v0.1.2"
+	Version     = "v0.1.3"
 	License     = `shvss
     Copyright (C) 2023 mericapewpew
 
@@ -35,12 +37,14 @@ const (
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.`
-	RumbleXmlUrl  = "http://rssgen.xyz/rumble/" // TODO : replace api, is slow
+	RumbleXmlUrl  = "http://rssgen.xyz/rumble/"
 	OdyseeXmlUrl  = "https://odysee.com/$/rss/@"
 	YoutubeXmlUrl = "https://www.youtube.com/feeds/videos.xml?channel_id="
 )
 
 var (
+	//go:embed images
+	images embed.FS
 	//go:embed root.html
 	rootHtml string
 )
@@ -327,6 +331,7 @@ func (s *Server) getServiceData() (Response, error) {
 		s.wg.Add(1)
 		vs := vv
 		go func() {
+			now := time.Now()
 			switch vs.Service {
 			case "rumble":
 				gr, err := httpGet(RumbleXmlUrl + vs.UID)
@@ -337,7 +342,7 @@ func (s *Server) getServiceData() (Response, error) {
 				}
 				f := Rumble{}
 				if err := xml.Unmarshal(gr, &f); err != nil {
-					log.Printf("faild to unmarshal xml data for %s %s %s :: \nError=\n%v\n", vs.Service, vs.Name, vs.UID, err)
+					log.Printf("faild to unmarshal xml data for %s %s %s :: \nError=%v\n", vs.Service, vs.Name, vs.UID, err)
 					s.wg.Done()
 					return
 				}
@@ -352,7 +357,12 @@ func (s *Server) getServiceData() (Response, error) {
 					}
 					r.Entries = append(r.Entries, i)
 				}
+				ts := time.Since(now)
+				if ts > time.Duration(1)*time.Second {
+					log.Printf("looked up %s on %s in %v", vs.Name, vs.Service, time.Since(now))
+				}
 				s.wg.Done()
+				return
 			case "odysee":
 				gr, err := httpGet(OdyseeXmlUrl + vs.UID)
 				if err != nil {
@@ -380,7 +390,12 @@ func (s *Server) getServiceData() (Response, error) {
 					}
 					r.Entries = append(r.Entries, i)
 				}
+				ts := time.Since(now)
+				if ts > time.Duration(1)*time.Second {
+					log.Printf("looked up %s on %s in %v", vs.Name, vs.Service, time.Since(now))
+				}
 				s.wg.Done()
+				return
 			case "youtube":
 				gr, err := httpGet(YoutubeXmlUrl + vs.UID)
 				if err != nil {
@@ -405,7 +420,12 @@ func (s *Server) getServiceData() (Response, error) {
 					}
 					r.Entries = append(r.Entries, i)
 				}
+				ts := time.Since(now)
+				if ts > time.Duration(1)*time.Second {
+					log.Printf("looked up %s on %s in %v", vs.Name, vs.Service, time.Since(now))
+				}
 				s.wg.Done()
+				return
 			}
 		}()
 	}
@@ -489,6 +509,7 @@ func (s *Server) Serve() {
 			}
 		}
 	}
+	http.Handle("/images/", http.FileServer(http.FS(images)))
 	http.HandleFunc("/rumbleEmbed", func(w http.ResponseWriter, r *http.Request) {
 		rmu, err := rumbleEmbedLookup(r.FormValue("data"))
 		if err != nil {
