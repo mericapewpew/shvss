@@ -342,7 +342,7 @@ func (s *Server) getServiceData() (Response, error) {
 				}
 				f := Rumble{}
 				if err := xml.Unmarshal(gr, &f); err != nil {
-					log.Printf("faild to unmarshal xml data for %s %s %s :: \nError=%v\n", vs.Service, vs.Name, vs.UID, err)
+					log.Printf("failed to unmarshal xml data for %s %s %s\n%v\n", vs.Service, vs.Name, vs.UID, err)
 					s.wg.Done()
 					return
 				}
@@ -351,7 +351,7 @@ func (s *Server) getServiceData() (Response, error) {
 						Service:  vs.Service,
 						Date:     v.PubDate,
 						VidName:  v.Title,
-						UserName: f.Channel.Text,
+						UserName: vs.Name,
 						VidID:    v.Guid.Text,
 						VidImg:   v.Image.Href,
 					}
