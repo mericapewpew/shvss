@@ -2,7 +2,6 @@ package main
 
 import (
 	"embed"
-	_ "embed"
 	"encoding/json"
 	"encoding/xml"
 	"flag"
@@ -286,11 +285,11 @@ func (s *Server) writeSubsFile(sf SubsFile) error {
 	return nil
 }
 
-func (s *Server) getUserName(input string) (name string, err error) {
-	if len(input) == 24 && input[0:2] == "UC" {
-		gr, err := httpGet(YoutubeXmlUrl + input)
+func (s *Server) getUserName(uid string) (name string, err error) {
+	if len(uid) == 24 && uid[0:2] == "UC" {
+		gr, err := httpGet(YoutubeXmlUrl + uid)
 		if err != nil {
-			return "", fmt.Errorf("ERROR::httpGet(YOUTUBE_XML_API_ID + input)::%v", err)
+			return "", fmt.Errorf("ERROR::httpGet(YoutubeXmlUrl + %s)::%v", uid, err)
 		}
 		f, err := youtubeXmlUnmarshal(gr)
 		if err != nil {
@@ -298,7 +297,7 @@ func (s *Server) getUserName(input string) (name string, err error) {
 		}
 		return f.Author.Name, nil
 	} else {
-		return "", fmt.Errorf("ERROR::getUserName('%s')::NON-UUID::length=(%d) ", input, len(input))
+		return "", fmt.Errorf("ERROR::getUserName('%s')::NON-UUID::length=(%d) ", uid, len(uid))
 	}
 }
 
