@@ -2,7 +2,7 @@
 Self Hosted Video Subscription Server
 
 ## Description
-A server that displays youtube, odysee and rumble videos in chronological order based on what you add to the subs div.
+A http server that displays youtube, odysee and rumble videos in chronological order based on what you add to the subs div.
 
 ## Installation
 * install build requirements
