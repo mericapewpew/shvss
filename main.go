@@ -15,7 +15,6 @@ import (
 	"regexp"
 	"strings"
 	"sync"
-	"time"
 )
 
 const (
@@ -330,7 +329,6 @@ func (s *Server) getServiceData() (Response, error) {
 		s.wg.Add(1)
 		vs := vv
 		go func() {
-			now := time.Now()
 			switch vs.Service {
 			case "rumble":
 				gr, err := httpGet(RumbleXmlUrl + vs.UID)
@@ -355,10 +353,6 @@ func (s *Server) getServiceData() (Response, error) {
 						VidImg:   v.Image.Href,
 					}
 					r.Entries = append(r.Entries, i)
-				}
-				ts := time.Since(now)
-				if ts > time.Duration(1)*time.Second {
-					log.Printf("looked up %s on %s in %v", vs.Name, vs.Service, time.Since(now))
 				}
 				s.wg.Done()
 				return
@@ -389,10 +383,6 @@ func (s *Server) getServiceData() (Response, error) {
 					}
 					r.Entries = append(r.Entries, i)
 				}
-				ts := time.Since(now)
-				if ts > time.Duration(1)*time.Second {
-					log.Printf("looked up %s on %s in %v", vs.Name, vs.Service, time.Since(now))
-				}
 				s.wg.Done()
 				return
 			case "youtube":
@@ -418,10 +408,6 @@ func (s *Server) getServiceData() (Response, error) {
 						VidImg:   s.Group.Thumbnail.URL,
 					}
 					r.Entries = append(r.Entries, i)
-				}
-				ts := time.Since(now)
-				if ts > time.Duration(1)*time.Second {
-					log.Printf("looked up %s on %s in %v", vs.Name, vs.Service, time.Since(now))
 				}
 				s.wg.Done()
 				return
@@ -490,6 +476,7 @@ func (s *Server) subsFile(action, data, service string) (SubsFile, error) {
 		sub.UID = data
 		sub.Service = service
 		sf.Subs = append(sf.Subs, sub)
+		log.Printf("added sub to subfile\n%v\n", sub)
 		if err := s.writeSubsFile(sf); err != nil {
 			return SubsFile{}, err
 		}
